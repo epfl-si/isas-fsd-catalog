@@ -1,0 +1,39 @@
+---
+# https://docs.openshift.com/dedicated/operators/admin/olm-managing-custom-catalogs.html#olm-creating-catalog-from-index_olm-managing-custom-catalogs
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: isas-fsd-catalog
+  namespace: openshift-marketplace
+  # annotations:
+  #   olm.catalogImageTemplate:
+  #     "<registry>/<namespace>/<index_image_name>:v{kube_major_version}.{kube_minor_version}.{kube_patch_version}"
+spec:
+  sourceType: grpc
+  grpcPodConfig:
+    securityContextConfig: legacy
+  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.1
+  displayName: ISAS-FSD Catalog
+  publisher: isas-fsd
+  updateStrategy:
+    registryPoll:
+      interval: 240m
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: svc0041-rke2-puller-pull-secret
+  namespace: openshift-marketplace
+data:
+  .dockerconfigjson: XXX
+type: kubernetes.io/dockerconfigjson
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: isas-fsd-catalog
+  namespace: openshift-marketplace
+imagePullSecrets:
+- name: svc0041-rke2-puller-pull-secret
