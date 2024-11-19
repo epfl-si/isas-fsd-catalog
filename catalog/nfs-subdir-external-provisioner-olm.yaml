@@ -1,0 +1,13 @@
+---
+defaultChannel: preview
+description: |
+  # NFS subdir external provisioner OLM operator
+name: nfs-subdir-ext-provisioner-olm
+schema: olm.package
+
+---
+schema: olm.channel
+package: nfs-subdir-ext-provisioner-olm
+name: preview
+entries:
+  - name: nfs-subdir-ext-provisioner-olm.v0.0.3
