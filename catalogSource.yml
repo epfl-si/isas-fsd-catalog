@@ -1,22 +1,4 @@
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: isas-fsd-catalog
-  namespace: openshift-marketplace
-imagePullSecrets:
-- name: svc0041-rke2-puller-pull-secret
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: default
-  namespace: openshift-marketplace
-imagePullSecrets:
-- name: svc0041-rke2-puller-pull-secret
-
----
 # https://docs.openshift.com/dedicated/operators/admin/olm-managing-custom-catalogs.html#olm-creating-catalog-from-index_olm-managing-custom-catalogs
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
@@ -33,6 +15,9 @@ spec:
     extractContent:
       cacheDir: /tmp/cache
       catalogDir: /configs
+  # Any use of a quay-its.epfl.ch/ image will send your pods into `ImagePullBackoff`,
+  # as it cannot do anonymous pulls (https://go.epfl.ch/INC0674050).
+  # but fret not! See serviceaccounts.yml in the same directory…
   image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.9
   displayName: ISAS-FSD Catalog
   publisher: isas-fsd
