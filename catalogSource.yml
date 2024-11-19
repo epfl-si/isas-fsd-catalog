@@ -29,8 +29,11 @@ metadata:
 spec:
   sourceType: grpc
   grpcPodConfig:
-    securityContextConfig: legacy
-  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.6
+    securityContextConfig: restricted
+    extractContent:
+      cacheDir: /tmp/cache
+      catalogDir: /configs
+  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.9
   displayName: ISAS-FSD Catalog
   publisher: isas-fsd
   updateStrategy:
