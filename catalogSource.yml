@@ -30,7 +30,7 @@ spec:
   sourceType: grpc
   grpcPodConfig:
     securityContextConfig: legacy
-  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.2
+  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.5
   displayName: ISAS-FSD Catalog
   publisher: isas-fsd
   updateStrategy:
