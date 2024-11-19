@@ -1,4 +1,22 @@
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: isas-fsd-catalog
+  namespace: openshift-marketplace
+imagePullSecrets:
+- name: svc0041-rke2-puller-pull-secret
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: openshift-marketplace
+imagePullSecrets:
+- name: svc0041-rke2-puller-pull-secret
+
+---
 # https://docs.openshift.com/dedicated/operators/admin/olm-managing-custom-catalogs.html#olm-creating-catalog-from-index_olm-managing-custom-catalogs
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
@@ -12,7 +30,7 @@ spec:
   sourceType: grpc
   grpcPodConfig:
     securityContextConfig: legacy
-  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.1
+  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.2
   displayName: ISAS-FSD Catalog
   publisher: isas-fsd
   updateStrategy:
@@ -28,12 +46,3 @@ metadata:
 data:
   .dockerconfigjson: XXX
 type: kubernetes.io/dockerconfigjson
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: isas-fsd-catalog
-  namespace: openshift-marketplace
-imagePullSecrets:
-- name: svc0041-rke2-puller-pull-secret
