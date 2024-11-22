@@ -22,4 +22,4 @@ spec:
   publisher: isas-fsd
   updateStrategy:
     registryPoll:
-      interval: 240m
+      interval: 20m
