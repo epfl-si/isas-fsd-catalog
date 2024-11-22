@@ -15,22 +15,11 @@ spec:
     extractContent:
       cacheDir: /tmp/cache
       catalogDir: /configs
-  # Any use of a quay-its.epfl.ch/ image will send your pods into `ImagePullBackoff`,
-  # as it cannot do anonymous pulls (https://go.epfl.ch/INC0674050).
-  # but fret not! See serviceaccounts.yml in the same directory…
-  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:v0.0.9
+  # anonymous.apps.t-ocp-its-01.xaas.epfl.ch is a (temporary, from the `.t-` part)
+  # mirroring proxy of quay-its.epfl.ch; see https://go.epfl.ch/INC0674050
+  image: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/isas-fsd-catalog:latest
   displayName: ISAS-FSD Catalog
   publisher: isas-fsd
   updateStrategy:
     registryPoll:
       interval: 240m
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: svc0041-rke2-puller-pull-secret
-  namespace: openshift-marketplace
-data:
-  .dockerconfigjson: XXX
-type: kubernetes.io/dockerconfigjson
