@@ -232,7 +232,7 @@ class OlmChannelParser:
                 current_version = current_version.inc_patchlevel()
 
         if not entries:
-            msg = f"No single image could be found! pattern={version["pattern"]}, from={version['from']}"
+            msg = f"No single image could be found! pattern={version['pattern']}, from={version['from']}"
             self.logger.fatal(msg)
             raise ValueError(msg)
 
