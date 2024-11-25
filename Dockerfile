@@ -1,10 +1,20 @@
+FROM python:3.13-slim AS builder
+
 # The builder image is expected to contain
 # /bin/opm (with serve subcommand)
-FROM quay.io/operator-framework/opm:v1.40.0 as builder
+COPY --from=quay.io/operator-framework/opm:v1.40.0 /bin/opm /bin/opm
 
-# Copy FBC root into image at /configs and pre-populate serve cache
-ADD build/catalog/index.yaml /configs/index.yaml
-RUN ["/bin/opm", "serve", "/configs", "--cache-dir=/tmp/cache", "--cache-only"]
+RUN mkdir /src
+WORKDIR /src
+
+COPY requirements.txt .
+RUN pip3 install --break-system-packages -r requirements.txt
+
+ADD nfs-subdir-external-provisioner-olm.yaml .
+
+COPY make-catalog.py .
+
+RUN python3 make-catalog.py --configs-out=/configs --cache-out=/tmp/cache *-olm.yaml
 
 FROM registry.redhat.io/openshift4/ose-operator-registry-rhel9:v4.17
 # The base image is expected to contain
