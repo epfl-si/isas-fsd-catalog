@@ -14,6 +14,7 @@ ADD nfs-subdir-external-provisioner-olm.yaml .
 
 COPY make-catalog.py .
 
+ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" /tmp/cachebuster
 RUN python3 make-catalog.py --configs-out=/configs --cache-out=/tmp/cache *-olm.yaml
 
 FROM registry.redhat.io/openshift4/ose-operator-registry-rhel9:v4.17
