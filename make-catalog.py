@@ -1,9 +1,11 @@
 import argparse
 from functools import cached_property
+from io import StringIO
 import itertools
 import logging
 import os
 import re
+import semver
 import shutil
 import subprocess
 import sys
@@ -11,6 +13,8 @@ import yaml
 
 
 class CataloggerCommandLineArgs:
+    debug = False
+
     def __init__ (self):
         parser = argparse.ArgumentParser(
                     prog='make-catalog.py',
@@ -18,18 +22,21 @@ class CataloggerCommandLineArgs:
 
         parser.add_argument('--configs-out')
         parser.add_argument('--cache-out')
+        parser.add_argument('--debug', action='store_true')
         parser.add_argument('input',  nargs='*')
 
         args = parser.parse_args()
         self.configs_out = args.configs_out
         self.cache_out = args.cache_out
         self.inputs = args.input
+        self.debug = args.debug
 
 
 class Catalogger:
     def __init__ (self, args):
         self.args = args
         self.logger = CataloggerLogger()
+        self.logger.setLevel(logging.DEBUG if self.args.debug else logging.INFO)
 
     def render (self):
         with open(os.path.join(self.configs_out, "index.yaml"), "w") as configs_out_fd:
@@ -37,23 +44,29 @@ class Catalogger:
                 with open(input_filename) as yaml_fd:
                     with self.logger.temp_prefix(input_filename):
                         for lineno, yaml_doc in split_yaml_documents(yaml_fd):
+                            bundles = []
                             with self.logger.temp_prefix(
                                     f"YAML document starting at line {lineno}"):
                                 if "schema: olm.channel" in yaml_doc:
-                                    yaml_doc = OlmChannelParser(self.logger, yaml_doc).expand_entries()
+                                    parser = OlmChannelParser(self.logger, yaml_doc)
+                                    yaml_doc = parser.expand_entries()
+                                    bundles.extend(list(parser.bundles))
 
                             configs_out_fd.write(yaml_doc)
                             configs_out_fd.write("\n---\n")
+                            for olm_bundle in bundles:
+                                configs_out_fd.write(olm_bundle)
+                                configs_out_fd.write("\n---\n")
 
     @property
     def has_opm (self):
         return shutil.which("opm") is not None
 
     def validate (self):
-        return self._run_opm(["validate", self.configs_out])
+        return run_opm(["validate", self.configs_out])
 
     def cacheify (self):
-        return self._run_opm(["serve", "--cache-only",
+        return run_opm(["serve", "--cache-only",
                               self.configs_out,
                               f"--cache-dir={self.args.cache_out}"])
 
@@ -76,9 +89,18 @@ class Catalogger:
         except FileExistsError:
             pass
 
-    def _run_opm (self, args):
-        return subprocess.run(["opm"] + args, check=True)
 
+def run_opm (cmdline_args, *args, **kwargs):
+    if "check" not in kwargs:
+        kwargs["check"] = True
+
+    cmdline = ["opm"] + cmdline_args
+
+    if "logger" in kwargs:
+        logger = kwargs.pop("logger")
+        logger.info("Running " + " ".join(cmdline))
+
+    return subprocess.run(cmdline, *args, **kwargs)
 
 class CataloggerLogger:
     def __init__ (self):
@@ -102,6 +124,10 @@ class CataloggerLogger:
 
         return TempPrefixContext()
 
+    def setLevel (self, *args, **kwargs):
+        """Delegated to `self.logger`."""
+        self.logger.setLevel(*args, **kwargs)
+
     def debug (self, msg, *args, **kwargs):
         """Delegated to `self.logger`."""
         self.logger.debug(msg, *args, **kwargs)
@@ -113,6 +139,10 @@ class CataloggerLogger:
     def warning (self, msg, *args, **kwargs):
         """Delegated to `self.logger`."""
         self.logger.warning(msg, *args, **kwargs)
+
+    def fatal (self, msg, *args, **kwargs):
+        """Delegated to `self.logger`."""
+        self.logger.fatal(msg, *args, **kwargs)
 
     @property
     def _log_prefix (self):
@@ -154,7 +184,7 @@ class OlmChannelParser:
         return (self._parsed[1] if self._parsed is not None else "")
 
     @property
-    def image_enumeration_params (self):
+    def image_versions (self):
         return (yaml.safe_load(self._parsed[2])
                 if self._parsed is not None and self._parsed[2] is not None
                 else None)
@@ -166,22 +196,88 @@ class OlmChannelParser:
                 else "")
 
     def expand_entries (self):
-        params = self.image_enumeration_params
-        if not params:
+        versions = self.image_versions
+        if not versions:
             self.logger.warning("Found channel without an expansion section")
             return self.yaml_channel_string
+
+        entries = []
+        self.bundles = []
+        for version in versions:
+            current_version = BundleVersion.parse(version["from"])
+
+            failures = getattr(version, 'failures', 1)
+            while failures >= 0:
+                docker_image_name = re.sub('@@VERSION@@', str(current_version),
+                                           version['pattern'])
+                try:
+                    opm_rendered = run_opm(
+                        ["render", docker_image_name, "--output=yaml"],
+                        logger=self.logger, capture_output=True)
+                except subprocess.CalledProcessError:
+                    failures = failures - 1
+                else:
+                    rendered = list(r[1] for r in split_yaml_documents(opm_rendered.stdout))
+                    self.bundles.extend(rendered)
+                    for r in rendered:
+                        r = yaml.safe_load(r)
+                        if r["schema"] == "olm.bundle":
+                            entries.append(dict(
+                                name=r["name"]
+                            ))
+                            if len(entries) > 1:
+                                entries[-1]["replaces"] = entries[-2]["name"]
+                        break
+            
+                current_version = current_version.inc_patchlevel()
+
+        if not entries:
+            msg = f"No single image could be found! pattern={version["pattern"]}, from={version['from']}"
+            self.logger.fatal(msg)
+            raise ValueError(msg)
 
         return f"""
 { self.yaml_prologue_string }
 entries:
-  # TODO: entries go here.
+{ yaml.safe_dump(entries) }
 { self.yaml_epilogue_string }
 """
 
 
-def split_yaml_documents (yaml_fd):
+class BundleVersion:
+    def __init__ (self, prefix, ver):
+        self.prefix = prefix
+        self.ver = (ver if isinstance(ver, semver.Version)
+                    else semver.parse_version_info(ver))
+
+    @classmethod
+    def parse  (cls, version_string):
+        matched = re.match('(v?)([0-9.]*)$', version_string)
+        if not matched:
+            raise ValueError("Unable to parse f{version_string}")
+
+        return cls(prefix=matched[1], ver=matched[2])
+
+    def inc_patchlevel (self):
+        that = self.__class__(prefix=self.prefix,
+                              ver=self.ver.replace(patch=self.ver.patch + 1))
+        return that
+
+    def __repr__ (self):
+        return f"{self.prefix}{self.ver}"
+
+
+def split_yaml_documents (yaml_fd_or_string):
     """Split a YAML file into documents (separated by three dashes). Returns each as a string.
     Yields pairs of (starting line number, YAML text)."""
+    
+    if isinstance(yaml_fd_or_string, bytes):
+        yaml_fd = (StringIO(yaml_fd_or_string.decode("utf-8")))
+    elif isinstance(yaml_fd_or_string, str):
+        yaml_fd = (StringIO(yaml_fd_or_string))
+    else:
+        yaml_fd = yaml_fd_or_string
+
     for key, group in itertools.groupby(
             enumerate(yaml_fd, start=1),
             lambda num_and_line: num_and_line[1].startswith('---')):
