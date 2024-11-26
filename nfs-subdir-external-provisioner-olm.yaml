@@ -11,4 +11,4 @@ package: nfs-subdir-external-provisioner-olm
 name: preview
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/nfs-subdir-ext-provisioner-olm-bundle:@@VERSION@@
-    from: v0.0.6
+    from: v0.0.16
