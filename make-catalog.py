@@ -1,4 +1,5 @@
 import argparse
+from collections import namedtuple
 from functools import cached_property
 from io import StringIO
 import itertools
@@ -204,37 +205,20 @@ class OlmChannelParser:
         entries = []
         self.bundles = []
         for version in versions:
-            current_version = BundleVersion.parse(version["from"])
-
-            failures = getattr(version, 'failures', 1)
-            while failures >= 0:
-                docker_image_name = re.sub('@@VERSION@@', str(current_version),
-                                           version['pattern'])
-                try:
-                    opm_rendered = run_opm(
-                        ["render", docker_image_name, "--output=yaml"],
-                        logger=self.logger, capture_output=True)
-                except subprocess.CalledProcessError:
-                    failures = failures - 1
-                else:
-                    rendered = list(r[1] for r in split_yaml_documents(opm_rendered.stdout))
-                    self.bundles.extend(rendered)
-                    for r in rendered:
-                        r = yaml.safe_load(r)
-                        if r["schema"] == "olm.bundle":
-                            entries.append(dict(
-                                name=r["name"]
-                            ))
-                            if len(entries) > 1:
-                                entries[-1]["replaces"] = entries[-2]["name"]
-                        break
-            
-                current_version = current_version.inc_patchlevel()
-
-        if not entries:
-            msg = f"No single image could be found! pattern={version['pattern']}, from={version['from']}"
-            self.logger.fatal(msg)
-            raise ValueError(msg)
+            for b in enumerate_bundle_versions(
+                    logger=self.logger,
+                    pattern=version['pattern'],
+                    first_version=ImageVersion.parse(version['from']),
+                    failures=getattr(version, 'failures', 1)):
+                self.bundles.extend(b.yamls)
+                for y in b.yamls:
+                    y = yaml.safe_load(y)
+                    if y["schema"] == "olm.bundle":
+                        entries.append(dict(
+                            name=y["name"]
+                        ))
+                    if len(entries) > 1:
+                        entries[-1]["replaces"] = entries[-2]["name"]
 
         return f"""
 { self.yaml_prologue_string }
@@ -244,7 +228,7 @@ entries:
 """
 
 
-class BundleVersion:
+class ImageVersion:
     def __init__ (self, prefix, ver):
         self.prefix = prefix
         self.ver = (ver if isinstance(ver, semver.Version)
@@ -265,6 +249,47 @@ class BundleVersion:
 
     def __repr__ (self):
         return f"{self.prefix}{self.ver}"
+
+
+BundleVersion = namedtuple("BundleVersion", ["version", "yamls"])
+
+def enumerate_bundle_versions (logger, pattern, first_version, failures=1):
+    """Yields all versions that exist, and their content, starting at `first_version`.
+
+    :param logger: Something with `.debug(...)`, .info(...)`, `.warning(...)` etc. methods
+    :param pattern: The pattern of image names, as a string, with the `@@VERSION@@` inside
+                    to be replaced with semver-style versions.
+    :param first_version: The first value to substitute `@@VERSION@@` with in `pattern`
+    :type first_version: ImageVersion
+    :param failures: The failure budget. `enumerate_bundle_versions` starts at `first_version`,
+                     incrementing the patchlevel one by one, until `opm render` has failed
+                     one more time than `failures`; it then stops.
+
+    :rtype: Iterator[:class:`BundleVersion`]
+    """
+    current_version = first_version
+    successes = 0
+    while failures >= 0:
+        docker_image_name = re.sub('@@VERSION@@', str(current_version),
+                                   pattern)
+        try:
+            opm_rendered = run_opm(
+                ["render", docker_image_name, "--output=yaml"],
+                logger=logger, capture_output=True)
+        except subprocess.CalledProcessError:
+            failures = failures - 1
+        else:
+            successes = successes + 1
+            yield BundleVersion(
+                version=current_version,
+                yamls=list(r[1] for r in split_yaml_documents(opm_rendered.stdout)))
+
+        current_version = current_version.inc_patchlevel()
+
+    if not successes:
+        msg = f"No single image could be found! pattern={pattern}, from={first_version}"
+        logger.fatal(msg)
+        raise ValueError(msg)
 
 
 def split_yaml_documents (yaml_fd_or_string):
