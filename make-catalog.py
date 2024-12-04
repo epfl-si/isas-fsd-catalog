@@ -205,10 +205,16 @@ class OlmChannelParser:
         entries = []
         self.bundles = []
         for version in versions:
+            first_version = ImageVersion.parse(version['from'])
+            if 'to' in version:
+                last_version = ImageVersion.parse(version['to'])
+            else:
+                last_version = None   # Stop only when we can't find any
+
             for b in enumerate_bundle_versions(
                     logger=self.logger,
                     pattern=version['pattern'],
-                    first_version=ImageVersion.parse(version['from']),
+                    first_version=first_version,
                     failures=getattr(version, 'failures', 1)):
                 self.bundles.extend(b.yamls)
                 for y in b.yamls:
@@ -219,6 +225,9 @@ class OlmChannelParser:
                         ))
                     if len(entries) > 1:
                         entries[-1]["replaces"] = entries[-2]["name"]
+
+                if last_version and b.version >= last_version:
+                    break
 
         return f"""
 { self.yaml_prologue_string }
