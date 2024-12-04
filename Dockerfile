@@ -1,8 +1,8 @@
-FROM python:3.13-slim AS builder
+FROM quay-its.epfl.ch/svc0041/python:3.13-slim AS builder
 
 # The builder image is expected to contain
 # /bin/opm (with serve subcommand)
-COPY --from=quay.io/operator-framework/opm:v1.40.0 /bin/opm /bin/opm
+COPY --from=quay-its.epfl.ch/svc0041/opm:v1.40.0 /bin/opm /bin/opm
 
 RUN mkdir /src
 WORKDIR /src
@@ -17,7 +17,7 @@ COPY make-catalog.py .
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" /tmp/cachebuster
 RUN python3 make-catalog.py --configs-out=/configs --cache-out=/tmp/cache *-olm.yaml
 
-FROM registry.redhat.io/openshift4/ose-operator-registry-rhel9:v4.17
+FROM quay-its.epfl.ch/svc0041/ose-operator-registry-rhel9:v4.17
 # The base image is expected to contain
 # /bin/opm (with serve subcommand) and /bin/grpc_health_probe
 
