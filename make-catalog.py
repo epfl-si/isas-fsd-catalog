@@ -250,6 +250,21 @@ class ImageVersion:
     def __repr__ (self):
         return f"{self.prefix}{self.ver}"
 
+    def __eq__ (self, other):
+        return (self.prefix == other.prefix) and self.ver.__eq__(other.ver)
+
+    def __gt__ (self, other):
+        return self.ver.__gt__(other.ver)
+
+    def __ge__ (self, other):
+        return self.ver.__ge__(other.ver)
+
+    def __lt__ (self, other):
+        return self.ver.__lt__(other.ver)
+
+    def __le__ (self, other):
+        return self.ver.__le__(other.ver)
+
 
 BundleVersion = namedtuple("BundleVersion", ["version", "yamls"])
 
