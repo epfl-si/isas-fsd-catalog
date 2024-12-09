@@ -50,8 +50,10 @@ class Catalogger:
                 print_yaml(package.olm_package_yaml)
                 for channel in package.channels:
                     print_yaml(channel.olm_channel_yaml)
-                    for bundle in channel.bundles:
-                        print_yaml(bundle)
+
+            for bundle_version in BundleVersion.all_loaded():
+                for y in bundle_version.yamls:
+                    print_yaml(y)
 
     @property
     def has_opm (self):
@@ -221,7 +223,6 @@ class OlmChannelParser:
             self.olm_channel_yaml = self._yaml_unexpanded
 
         entries = []
-        self.bundles = []
         for version in versions:
             first_version = ImageVersion.parse(version['from'])
             if 'to' in version:
@@ -234,7 +235,6 @@ class OlmChannelParser:
                     pattern=version['pattern'],
                     first_version=first_version,
                     failures=getattr(version, 'failures', 1)):
-                self.bundles.extend(b.yamls)
                 for y in b.yamls:
                     y = yaml.safe_load(y)
                     if y["schema"] == "olm.bundle":
@@ -306,6 +306,10 @@ class BundleVersion:
             cls._load_cache[docker_image_name] = cls._do_load(
                 logger, docker_image_name, expected_version)
         return cls._load_cache[docker_image_name]
+
+    @classmethod
+    def all_loaded (cls):
+        return (bv for bv in cls._load_cache.values() if bv is not None)
 
     @classmethod
     def _do_load (cls, logger, docker_image_name, expected_version):
