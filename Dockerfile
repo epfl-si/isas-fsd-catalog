@@ -10,7 +10,7 @@ WORKDIR /src
 COPY requirements.txt .
 RUN pip3 install --break-system-packages -r requirements.txt
 
-ADD nfs-subdir-external-provisioner-olm.yaml .
+ADD nfs-subdir-external-provisioner-olm.yaml wordpress-operator-olm.yaml .
 
 COPY make-catalog.py .
 

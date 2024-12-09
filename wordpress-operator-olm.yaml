@@ -1,0 +1,14 @@
+---
+schema: olm.package
+name: wordpress-operator-olm
+description: |
+  # EPFL WordPress operator
+defaultChannel: preview
+
+---
+schema: olm.channel
+name: preview
+package: wordpress-operator-olm
+_versions:   # Substituted by `make-catalog.py`
+  - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
+    from: v0.0.1
