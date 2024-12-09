@@ -41,23 +41,17 @@ class Catalogger:
 
     def render (self):
         with open(os.path.join(self.configs_out, "index.yaml"), "w") as configs_out_fd:
-            for input_filename in self.args.inputs:
-                with open(input_filename) as yaml_fd:
-                    with self.logger.temp_prefix(input_filename):
-                        for lineno, yaml_doc in split_yaml_documents(yaml_fd):
-                            bundles = []
-                            with self.logger.temp_prefix(
-                                    f"YAML document starting at line {lineno}"):
-                                if "schema: olm.channel" in yaml_doc:
-                                    parser = OlmChannelParser(self.logger, yaml_doc)
-                                    yaml_doc = parser.expand_entries()
-                                    bundles.extend(list(parser.bundles))
+            def print_yaml (yaml_string):
+                configs_out_fd.write(yaml_string)
+                configs_out_fd.write("\n---\n")
 
-                            configs_out_fd.write(yaml_doc)
-                            configs_out_fd.write("\n---\n")
-                            for olm_bundle in bundles:
-                                configs_out_fd.write(olm_bundle)
-                                configs_out_fd.write("\n---\n")
+            for input_filename in self.args.inputs:
+                package = OlmPackageParser(self.logger, input_filename)
+                print_yaml(package.olm_package_yaml)
+                for channel in package.channels:
+                    print_yaml(channel.olm_channel_yaml)
+                    for bundle in channel.bundles:
+                        print_yaml(bundle)
 
     @property
     def has_opm (self):
@@ -169,15 +163,39 @@ class CataloggerLogger:
         return formatter.format(record)
 
 
+class OlmPackageParser:
+    def __init__ (self, logger, yaml_filename):
+        self.logger = logger
+        self.yaml_filename = yaml_filename
+
+        with open(self.yaml_filename) as yaml_fd:
+            with self.logger.temp_prefix(self.yaml_filename):
+                self._yaml_docs = list(split_yaml_documents(yaml_fd))
+
+    @property
+    def olm_package_yaml (self):
+        for _, yaml_doc in self._yaml_docs:
+            if 'schema: olm.package' in yaml_doc:
+                return yaml_doc
+
+    @property
+    def channels (self):
+        for lineno, yaml_doc in self._yaml_docs:
+            if 'schema: olm.channel' in yaml_doc:
+                with self.logger.temp_prefix(f'{self.yaml_filename}: YAML document starting at line {lineno}'):
+                    yield OlmChannelParser(self.logger, yaml_doc)
+
+
 class OlmChannelParser:
     def __init__ (self, logger, yaml_channel_string):
         self.logger = logger
-        self.yaml_channel_string = yaml_channel_string
+        self._yaml_unexpanded = yaml_channel_string
+        self._load_entries()
 
     @cached_property
     def _parsed (self):
         return re.match(
-            "(.*)^_versions:(.*?)(^[a-zA-Z].*)?\\Z", self.yaml_channel_string,
+            "(.*)^_versions:(.*?)(^[a-zA-Z].*)?\\Z", self._yaml_unexpanded,
             re.MULTILINE|re.DOTALL)
 
     @property
@@ -196,11 +214,11 @@ class OlmChannelParser:
                 if self._parsed is not None and self._parsed[3] is not None
                 else "")
 
-    def expand_entries (self):
+    def _load_entries (self):
         versions = self.image_versions
         if not versions:
             self.logger.warning("Found channel without an expansion section")
-            return self.yaml_channel_string
+            self.olm_channel_yaml = self._yaml_unexpanded
 
         entries = []
         self.bundles = []
@@ -229,7 +247,7 @@ class OlmChannelParser:
                 if last_version and b.version >= last_version:
                     break
 
-        return f"""
+        self.olm_channel_yaml = f"""
 { self.yaml_prologue_string }
 entries:
 { yaml.safe_dump(entries) }
