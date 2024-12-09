@@ -44,3 +44,5 @@ OPM = $(shell which opm)
 endif
 endif
 
+clean:
+	rm -rf config/ tmp/
