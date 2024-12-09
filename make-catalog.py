@@ -298,8 +298,17 @@ class BundleVersion:
         self.version = version
         self.yamls = yamls
 
+    _load_cache = {}
+
     @classmethod
     def load (cls, logger, docker_image_name, expected_version):
+        if docker_image_name not in cls._load_cache:
+            cls._load_cache[docker_image_name] = cls._do_load(
+                logger, docker_image_name, expected_version)
+        return cls._load_cache[docker_image_name]
+
+    @classmethod
+    def _do_load (cls, logger, docker_image_name, expected_version):
         try:
             opm_rendered = run_opm(
                 ["render", docker_image_name, "--output=yaml"],
