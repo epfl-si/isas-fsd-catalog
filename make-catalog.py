@@ -299,6 +299,31 @@ class BundleVersion:
         self.yamls = yamls
 
     @classmethod
+    def load (cls, logger, docker_image_name, expected_version):
+        try:
+            opm_rendered = run_opm(
+                ["render", docker_image_name, "--output=yaml"],
+                logger=logger, capture_output=True)
+        except subprocess.CalledProcessError:
+            return None
+
+        yamls = list(r[1] for r in split_yaml_documents(opm_rendered.stdout))
+        for y in yamls:
+            for prop in yaml.safe_load(y)["properties"]:
+                if prop["type"] == "olm.package":
+                    actual_version = prop["value"]["version"]
+                    if actual_version != expected_version.ver:
+                        logger.warn(f"Skipping malformed image f{docker_image_name} (contains version {actual_version}, expected {expected_version.ver})")
+                        return None
+                    else:
+                        return cls(version=expected_version,
+                                   yamls=yamls)
+
+        failure = f"No `olm.package` property found in {docker_image_name}!"
+        logger.warn(failure)
+        return None
+
+    @classmethod
     def enumerate (cls, logger, pattern, first_version, failures=1):
         """Yields all versions that exist, and their content, starting at `first_version`.
 
@@ -318,17 +343,12 @@ class BundleVersion:
         while failures >= 0:
             docker_image_name = re.sub('@@VERSION@@', str(current_version),
                                        pattern)
-            try:
-                opm_rendered = run_opm(
-                    ["render", docker_image_name, "--output=yaml"],
-                    logger=logger, capture_output=True)
-            except subprocess.CalledProcessError:
+            bundle_version = cls.load(logger, docker_image_name, current_version)
+            if bundle_version is None:
                 failures = failures - 1
             else:
                 successes = successes + 1
-                yield cls(
-                    version=current_version,
-                    yamls=list(r[1] for r in split_yaml_documents(opm_rendered.stdout)))
+                yield bundle_version
 
             current_version = current_version.inc_patchlevel()
 
