@@ -3,12 +3,13 @@ schema: olm.package
 name: wordpress-operator-olm
 description: |
   # EPFL WordPress operator
-defaultChannel: production
+defaultChannel: test
 
 ---
 schema: olm.channel
-name: production
+name: test
 package: wordpress-operator-olm
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
-    from: v0.0.1
+    from: v0.0.29
+
