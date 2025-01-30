@@ -18,6 +18,13 @@ spec:
   # anonymous.apps.t-ocp-its-01.xaas.epfl.ch is a (temporary, from the `.t-` part)
   # mirroring proxy of quay-its.epfl.ch; see https://go.epfl.ch/INC0674050
   image: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/isas-fsd-catalog:latest
+  resources:
+    limits:
+      cpu: 100m
+      memory: 256Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
   displayName: ISAS-FSD Catalog
   publisher: isas-fsd
   updateStrategy:
