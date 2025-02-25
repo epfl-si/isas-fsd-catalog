@@ -18,7 +18,7 @@ name: production
 package: wordpress-operator-olm
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
-    from: v0.0.36
+    from: v0.0.52
     # Please don't remove this line. Rather, rewrite the `to:` to the latest version you want
     # to push:
-    to: v0.0.52
+    to: v0.0.67
