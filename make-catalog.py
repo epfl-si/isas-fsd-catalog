@@ -352,6 +352,8 @@ class BundleVersion:
         else:
             last_version = None   # Stop only when we can't find any
 
+        to_skip = set(versions_info.get("skip", []))
+
         current_version = first_version
         successes = 0
         while failures >= 0:
@@ -364,7 +366,13 @@ class BundleVersion:
                 successes = successes + 1
                 yield bundle_version
 
-            current_version = current_version.inc_patchlevel()
+            while True:
+                current_version = current_version.inc_patchlevel()
+                if str(current_version) in to_skip:
+                    continue
+                else:
+                    break
+
             if last_version and current_version >= last_version:
                 break
 
