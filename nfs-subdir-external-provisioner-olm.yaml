@@ -8,15 +8,6 @@ defaultChannel: production
 ---
 schema: olm.channel
 package: nfs-subdir-external-provisioner-olm
-name: obsolete
-_versions:   # Substituted by `make-catalog.py`
-  - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/nfs-subdir-ext-provisioner-olm-bundle:@@VERSION@@
-    from: v0.0.16
-    to: v0.0.24
-
----
-schema: olm.channel
-package: nfs-subdir-external-provisioner-olm
 name: production
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/nfs-subdir-ext-provisioner-olm-bundle:@@VERSION@@
