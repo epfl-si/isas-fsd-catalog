@@ -224,17 +224,10 @@ class OlmChannelParser:
 
         entries = []
         for version in versions:
-            first_version = ImageVersion.parse(version['from'])
-            if 'to' in version:
-                last_version = ImageVersion.parse(version['to'])
-            else:
-                last_version = None   # Stop only when we can't find any
 
             for b in BundleVersion.enumerate(
                     logger=self.logger,
-                    pattern=version['pattern'],
-                    first_version=first_version,
-                    failures=getattr(version, 'failures', 1)):
+                    versions_info=version):
                 for y in b.yamls:
                     y = yaml.safe_load(y)
                     if y["schema"] == "olm.bundle":
@@ -243,9 +236,6 @@ class OlmChannelParser:
                         ))
                     if len(entries) > 1:
                         entries[-1]["replaces"] = entries[-2]["name"]
-
-                if last_version and b.version >= last_version:
-                    break
 
         self.olm_channel_yaml = f"""
 { self.yaml_prologue_string }
@@ -337,20 +327,31 @@ class BundleVersion:
         return None
 
     @classmethod
-    def enumerate (cls, logger, pattern, first_version, failures=1):
+    def enumerate (cls, logger, versions_info):
         """Yields all versions that exist, and their content, starting at `first_version`.
 
         :param logger: Something with `.debug(...)`, .info(...)`, `.warning(...)` etc. methods
-        :param pattern: The pattern of image names, as a string, with the `@@VERSION@@` inside
+        :param versions_info: A structure (dict) from the configuration file, describing the way to
+                        enumerate versions.
+        :param versions_info["pattern"]: The pattern of image names, as a string, with the `@@VERSION@@` inside
                         to be replaced with semver-style versions.
-        :param first_version: The first value to substitute `@@VERSION@@` with in `pattern`
+        :param versions_info["from"]: The first value to substitute `@@VERSION@@` with in `pattern`
         :type first_version: ImageVersion
-        :param failures: The failure budget. `enumerate_bundle_versions` starts at `first_version`,
+        :param versions_info["failures"]: The failure budget. `enumerate_bundle_versions` starts at `first_version`,
                          incrementing the patchlevel one by one, until `opm render` has failed
                          one more time than `failures`; it then stops.
 
         :rtype: Iterator[:class:`BundleVersion`]
         """
+
+        pattern = versions_info["pattern"]
+        first_version = ImageVersion.parse(versions_info["from"])
+        failures = versions_info.get("failures", 1)
+        if 'to' in versions_info:
+            last_version = ImageVersion.parse(versions_info['to'])
+        else:
+            last_version = None   # Stop only when we can't find any
+
         current_version = first_version
         successes = 0
         while failures >= 0:
@@ -364,6 +365,8 @@ class BundleVersion:
                 yield bundle_version
 
             current_version = current_version.inc_patchlevel()
+            if last_version and current_version >= last_version:
+                break
 
         if not successes:
             msg = f"No single image could be found! pattern={pattern}, from={first_version}"
