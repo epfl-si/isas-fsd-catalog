@@ -36,6 +36,7 @@ _versions:   # Substituted by `make-catalog.py`
       - v0.0.88
       - v0.0.89
       - v0.0.90
+      - v0.0.91
 ---
 schema: olm.channel
 name: production
