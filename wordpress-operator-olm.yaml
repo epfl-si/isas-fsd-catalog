@@ -7,37 +7,25 @@ defaultChannel: production
 
 ---
 schema: olm.channel
+name: development
+package: wordpress-operator-olm
+_versions:   # Substituted by `make-catalog.py`
+  - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
+    from: v0.0.60
+    to: v0.0.68
+  - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
+    from: v0.0.93
+---
+schema: olm.channel
 name: test
 package: wordpress-operator-olm
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
     from: v0.0.60
-    skip:
-      # These, um, died in a freak Quay accident.
-      - v0.0.69
-      - v0.0.70
-      - v0.0.71
-      - v0.0.72
-      - v0.0.73
-      - v0.0.74
-      - v0.0.75
-      - v0.0.76
-      - v0.0.77
-      - v0.0.78
-      - v0.0.79
-      - v0.0.80
-      - v0.0.81
-      - v0.0.82
-      - v0.0.83
-      - v0.0.84
-      - v0.0.85
-      - v0.0.86
-      - v0.0.87
-      - v0.0.88
-      - v0.0.89
-      - v0.0.90
-      - v0.0.91
-      - v0.0.92
+    to: v0.0.68
+  - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
+    from: v0.0.93
+    to: v0.0.93
 ---
 schema: olm.channel
 name: production
