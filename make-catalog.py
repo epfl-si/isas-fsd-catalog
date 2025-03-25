@@ -363,6 +363,8 @@ class BundleVersion:
                 bundle_version = cls.load(logger, docker_image_name, current_version)
                 if bundle_version is None:
                     failures = failures - 1
+                    bailing_out_maybe = ", bailing out" if failures < 0 else ""
+                    logger.info(f"Could not load version {current_version}{bailing_out_maybe}")
                 else:
                     successes = successes + 1
                     yield bundle_version
