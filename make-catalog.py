@@ -357,21 +357,17 @@ class BundleVersion:
         current_version = first_version
         successes = 0
         while failures >= 0 and (last_version is None or current_version <= last_version):
-            docker_image_name = re.sub('@@VERSION@@', str(current_version),
-                                       pattern)
-            bundle_version = cls.load(logger, docker_image_name, current_version)
-            if bundle_version is None:
-                failures = failures - 1
-            else:
-                successes = successes + 1
-                yield bundle_version
-
-            while True:
-                current_version = current_version.inc_patchlevel()
-                if str(current_version) in to_skip:
-                    continue
+            if str(current_version) not in to_skip:
+                docker_image_name = re.sub('@@VERSION@@', str(current_version),
+                                           pattern)
+                bundle_version = cls.load(logger, docker_image_name, current_version)
+                if bundle_version is None:
+                    failures = failures - 1
                 else:
-                    break
+                    successes = successes + 1
+                    yield bundle_version
+
+            current_version = current_version.inc_patchlevel()
 
         if not successes:
             msg = f"No single image could be found! pattern={pattern}, from={first_version}"
