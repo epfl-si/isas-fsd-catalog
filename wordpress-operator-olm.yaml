@@ -27,7 +27,7 @@ _versions:   # Substituted by `make-catalog.py`
     to: v0.0.98
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
     from: v0.0.101
-    to: v0.0.101
+    to: v0.0.102
 ---
 schema: olm.channel
 name: production
