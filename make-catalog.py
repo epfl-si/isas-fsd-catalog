@@ -323,7 +323,7 @@ class BundleVersion:
                                    yamls=yamls)
 
         failure = f"No `olm.package` property found in {docker_image_name}!"
-        logger.warn(failure)
+        logger.warning(failure)
         return None
 
     @classmethod
