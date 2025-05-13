@@ -33,3 +33,6 @@ _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
     from: v0.0.93
     to: v0.0.93
+  - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
+    from: v0.0.103
+    to: v0.0.103
