@@ -21,7 +21,7 @@ _versions:   # Substituted by `make-catalog.py`
     from: v0.1.11
     # Please don't remove this line. Rather, rewrite the `to:` to the latest version you want
     # to push:
-    to: v0.1.11
+    to: v0.1.12
 ---
 schema: olm.channel
 name: production
@@ -29,4 +29,4 @@ package: wordpress-operator-olm
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
     from: v0.1.11
-    to: v0.1.11
+    to: v0.1.12
