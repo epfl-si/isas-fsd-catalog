@@ -11,14 +11,14 @@ name: development
 package: wordpress-operator-olm
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
-    from: v0.1.0
+    from: v0.1.12
 ---
 schema: olm.channel
 name: test
 package: wordpress-operator-olm
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
-    from: v0.1.11
+    from: v0.1.12
     # Please don't remove this line. Rather, rewrite the `to:` to the latest version you want
     # to push:
     to: v0.1.12
@@ -28,5 +28,5 @@ name: production
 package: wordpress-operator-olm
 _versions:   # Substituted by `make-catalog.py`
   - pattern: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
-    from: v0.1.11
+    from: v0.1.12
     to: v0.1.12
