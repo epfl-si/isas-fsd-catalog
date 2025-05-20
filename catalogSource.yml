@@ -20,7 +20,6 @@ spec:
   image: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/isas-fsd-catalog:latest
   resources:
     limits:
-      cpu: 100m
       memory: 256Mi
     requests:
       cpu: 10m
