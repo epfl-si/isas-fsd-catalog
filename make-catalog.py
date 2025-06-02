@@ -316,7 +316,7 @@ class BundleVersion:
                 if prop["type"] == "olm.package":
                     actual_version = prop["value"]["version"]
                     if actual_version != expected_version.ver:
-                        logger.warn(f"Skipping malformed image f{docker_image_name} (contains version {actual_version}, expected {expected_version.ver})")
+                        logger.warning(f"Skipping malformed image f{docker_image_name} (contains version {actual_version}, expected {expected_version.ver})")
                         return None
                     else:
                         return cls(version=expected_version,
