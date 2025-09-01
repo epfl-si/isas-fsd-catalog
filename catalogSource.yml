@@ -1,5 +1,6 @@
 ---
 # https://docs.openshift.com/dedicated/operators/admin/olm-managing-custom-catalogs.html#olm-creating-catalog-from-index_olm-managing-custom-catalogs
+# This yaml is now applied by ansible in OKD or via ticket in OS4
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
@@ -17,7 +18,9 @@ spec:
       catalogDir: /configs
   # anonymous.apps.t-ocp-its-01.xaas.epfl.ch is a (temporary, from the `.t-` part)
   # mirroring proxy of quay-its.epfl.ch; see https://go.epfl.ch/INC0674050
-  image: anonymous.apps.t-ocp-its-01.xaas.epfl.ch/svc0041/isas-fsd-catalog:latest
+  image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:latest
+  secrets:
+    - svc0041-svc0041-puller-pull-secret
   resources:
     limits:
       memory: 256Mi
