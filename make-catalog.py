@@ -304,8 +304,13 @@ class BundleVersion:
     @classmethod
     def _do_load (cls, logger, docker_image_name, expected_version):
         try:
+            # with open("/var/run/secrets/openshift.io/build/pullSecret", "r") as f:
+            #     content = f.read()
+            # print(content)
+            files = os.listdir("/var/run/secrets/openshift.io/build/pullSecret")
+            print(files)
             opm_rendered = run_opm(
-                ["render", docker_image_name, "--output=yaml"],
+                ["render", docker_image_name, "--output=yaml"], # , "--authfile", ""
                 logger=logger, capture_output=True)
         except subprocess.CalledProcessError:
             return None
