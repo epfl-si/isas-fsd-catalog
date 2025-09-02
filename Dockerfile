@@ -14,7 +14,7 @@ ADD nfs-subdir-external-provisioner-olm.yaml wordpress-operator-olm.yaml .
 
 COPY make-catalog.py .
 
-COPY pullSecret/.dockerconfigjson /root/.docker/configs.json
+COPY pullSecret/.dockerconfigjson /root/.docker/config.json
 RUN pwd; ls -la /root/.docker/
 
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" /tmp/cachebuster
