@@ -292,7 +292,9 @@ class BundleVersion:
 
     @classmethod
     def load (cls, logger, docker_image_name, expected_version):
+        logger.info(f'IMAGE NAME------------------{docker_image_name}')
         if docker_image_name not in cls._load_cache:
+            logger.info(f'IMAGE NOT IN CACHE------------------{docker_image_name}')
             cls._load_cache[docker_image_name] = cls._do_load(
                 logger, docker_image_name, expected_version)
         return cls._load_cache[docker_image_name]
@@ -304,10 +306,12 @@ class BundleVersion:
     @classmethod
     def _do_load (cls, logger, docker_image_name, expected_version):
         try:
+            logger.info(f'BEFORE RUN OPM------------------{docker_image_name}')
             opm_rendered = run_opm(
                 ["render", docker_image_name, "--output=yaml"],
                 logger=logger, capture_output=True)
         except subprocess.CalledProcessError as e:
+            logger.info(f'OPM EXCEPTION------------------{docker_image_name}')
             logger.warning(e.output.decode())
             return None
 
@@ -317,13 +321,16 @@ class BundleVersion:
                 if prop["type"] == "olm.package":
                     actual_version = prop["value"]["version"]
                     if actual_version != expected_version.ver:
+                        logger.info(f'OPM EXCEPTION------------------Skipping malformed image f{docker_image_name} (contains version {actual_version}, expected {expected_version.ver})')
                         logger.warning(f"Skipping malformed image f{docker_image_name} (contains version {actual_version}, expected {expected_version.ver})")
                         return None
                     else:
+                        logger.info(f'OPM OK------------------{expected_version} - {yamls}')
                         return cls(version=expected_version,
                                    yamls=yamls)
 
         failure = f"No `olm.package` property found in {docker_image_name}!"
+        logger.info(f'END LOAD------------------{failure}')
         logger.warning(failure)
         return None
 
