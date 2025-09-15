@@ -34,6 +34,9 @@ _versions:   # Substituted by `make-catalog.py`
   - pattern: quay-its.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
     from: v0.2.0
     to: v0.2.0
+  - pattern: quay-its.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
+    from: v0.3.0
+    to: v0.3.12
 ---
 schema: olm.channel
 name: production
