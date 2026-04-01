@@ -14,9 +14,14 @@ ADD nfs-subdir-external-provisioner-olm.yaml wordpress-operator-olm.yaml .
 
 COPY make-catalog.py .
 
+ENV HOME=/src
+RUN mkdir .docker
+COPY pullSecret/.dockerconfigjson .docker/config.json
+
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" /tmp/cachebuster
 RUN python3 make-catalog.py --configs-out=/configs --cache-out=/tmp/cache *-olm.yaml
 
+# Resetting the layer discards the secrets in .docker/, which is what we want
 FROM quay-its.epfl.ch/svc0041/ose-operator-registry-rhel9:v4.17
 # The base image is expected to contain
 # /bin/opm (with serve subcommand) and /bin/grpc_health_probe

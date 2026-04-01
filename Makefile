@@ -1,7 +1,7 @@
 CATALOG_IMG ?= quay-its.epfl.ch/svc0041/isas-fsd-catalog:latest
 
 .PHONY: build
-build:
+build: pullSecret/.dockerconfigjson
 	docker build -t $(CATALOG_IMG) .
 
 .PHONY: push
@@ -12,6 +12,15 @@ push:
 
 .PHONY: dev
 dev: venv opm
+
+pullSecret/.dockerconfigjson:
+	@echo >&2 "Please create suitable pullSecret/.dockerconfigjson for a dev build."
+	@echo >&2 "This file should contain suitable Docker credentials to read images out of Quay."
+	@echo >&2 "Obtain e.g. with"
+	@echo >&2
+	@echo >&2 "  oc extract --to=- secret/svc0041-svc0041-puller-pull-secret > pullSecret/.dockerconfigjson"
+	@echo >&2
+	exit 1
 
 venv: requirements.txt requirements-dev.txt
 	rm -rf $@; mkdir $@
