@@ -16,8 +16,6 @@ spec:
     extractContent:
       cacheDir: /tmp/cache
       catalogDir: /configs
-  # anonymous.apps.t-ocp-its-01.xaas.epfl.ch is a (temporary, from the `.t-` part)
-  # mirroring proxy of quay-its.epfl.ch; see https://go.epfl.ch/INC0674050
   image: quay-its.epfl.ch/svc0041/isas-fsd-catalog:latest
   secrets:
     - svc0041-svc0041-puller-pull-secret
