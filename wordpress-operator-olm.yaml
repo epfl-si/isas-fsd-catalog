@@ -19,7 +19,7 @@ package: wordpress-operator-olm
 _versions:   # Substituted by `make-catalog.py`
   - pattern: quay-its.epfl.ch/svc0041/wordpress-olm-bundle:@@VERSION@@
     from: v0.3.14
-    to: v0.3.21
+    to: v0.3.22
 ---
 schema: olm.channel
 name: production
